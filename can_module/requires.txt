@@ -1,0 +1,4 @@
+dataclasses-json>=0.5.2
+pigpio-pwm>=1.0
+python-can>=3.3.3
+getkey>=0.6.5
