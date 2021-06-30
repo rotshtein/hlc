@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import sys, time
-sys.path.append('/home/pi/HLC')
+sys.path.append('/home/pi/hlc')
 
 import signal
 import pigpio_pwm
@@ -19,10 +19,9 @@ from can_module.src.ReturnStatusMessage import ReturnStatusMessage
 from getkey import getkey, keys
 
 VERSION = "1.0"
-MY_ADDRESS = 0x20
-MAX_PWM_TIME = 2000.0
-MIN_PWM_TIME = 1000.0
-MID_PWM_TIME = 1540.0
+MAX_PWM_TIME = 1900.0
+MIN_PWM_TIME = 1100.0
+MID_PWM_TIME = 1500.0
 MAX_SPEED = 10000
 MAX_STEERING = 10000
 DEFAULT_BRAKE = -2000
@@ -33,7 +32,7 @@ TIME_BEFORE_BREAK_MS = 100
 
 
 STEERING_PWM_INPUT_PIN = 17  # PI GPIO
-SPEED_PWM_INPUT_PIN = 27     # PI GPIO
+SPEED_PWM_INPUT_PIN = 22     # PI GPIO
 
 STATUS_TOPIC = "Afron/status"
 EMERGENCY_TOPIC = "Afron/emergency"
@@ -44,7 +43,6 @@ ULTRASONIC_TOPIC = "Afron/ultrasonic"
 PWM_SPEED_TOPIC = "Afron/pwm_speed"
 PWM_STEERING_TOPIC = "Afron/pwm_steering"
 
-LARGE_TURN = 0.5
 stop_run = False
 
 
@@ -112,8 +110,7 @@ class CanbusManager(BaseModule):
         self.HurtBeatMessage = ReturnStatusMessage(timeout_ms = 150, Channel = CAN_INTERFACE)
         
         self.PrimaryControlMessage.start()
-        
-        
+                
         status = 0
         prev_speed = 1000
         prev_steering = 1000
@@ -127,47 +124,60 @@ class CanbusManager(BaseModule):
 
         read_steering_is_aligned = False
         while not self.stop_thread:
+            speed = speed_pwm.pulse_width
+            steering = steering_pwn.pulse_width
+            #print (speed,steering)
             try:
-                if self.HurtBeatMessage.IsAlive():
-                    cnt += 1
+                if self.Emergency:
+                        self.PrimaryControlMessage.set_gas_brake(-MAX_SPEED)
+                else:        
+                    if not self.HurtBeatMessage.IsAlive():
+                        cnt += 1
 
-                    try:
-                        steering = ((steering - MID_PWM_TIME) / (MID_PWM_TIME - MIN_PWM_TIME))  # -1 <= steering >= 1
-                        if prev_steering != steering:
-                            
-                            if steering > 1:
-                                steering = 1
-                            if steering < -1:
-                                steering = -1
+                        try:
+                            if steering == 0:
+                                steering = MID_PWM_TIME
+                            steering = ((steering - MID_PWM_TIME) / (MID_PWM_TIME - MIN_PWM_TIME))  # -1 <= steering >= 1
+                            if prev_steering != steering:
                                 
-                            prev_steering = steering
-                            set_steering = int(round(steering * MAX_STEERING))
-                            self.PrimaryControlMessage.set_steering(set_steering)
-                            self.PrimaryControlMessage.update_data()
-                    except:
-                            self.log.error("Steering error")
+                                if steering > 1:
+                                    steering = 1
+                                if steering < -1:
+                                    steering = -1
+                                    
+                                prev_steering = steering
+                                set_steering = int(round(steering * MAX_STEERING))
+                                self.PrimaryControlMessage.set_steering(set_steering)
+                                self.PrimaryControlMessage.update_data()
+                        except:
+                                self.log.error("Steering error")
+                                self.log.error(traceback.print_exc())
+
+                        try:
+                            if speed == 0:
+                                speed = MID_PWM_TIME
+                            speed = ((speed - MID_PWM_TIME) / (MID_PWM_TIME - MIN_PWM_TIME))  # -1 <= speed >= 1
+                            if prev_speed != speed:
+                                if steering > 1:
+                                    steering = 1
+                                if steering < -1:
+                                    steering = -1
+                                prev_speed = speed
+                                
+                                set_speed = int(round(speed * MAX_SPEED))
+                                if set_speed < 10:
+                                    set_speed = DEFAULT_BRAKE
+                                self.PrimaryControlMessage.set_gas_brake(set_speed)
+                                self.PrimaryControlMessage.update_data()
+
+                        except:
+                            self.log.error("Speed error")
                             self.log.error(traceback.print_exc())
-
-                    try:
-                        speed = ((speed - MID_PWM_TIME) / (MID_PWM_TIME - MIN_PWM_TIME))  # -1 <= speed >= 1
-                        if prev_speed != speed:
-                            if steering > 1:
-                                steering = 1
-                            if steering < -1:
-                                steering = -1
-                            prev_speed = speed
                             
-                            set_speed = int(round(speed * MAX_SPEED))
-                            if set_speed < 10:
-                                set_speed = DEFAULT_BRAKE
-                            self.PrimaryControlMessage.set_gas_brake(set_speed)
-                            self.PrimaryControlMessage.update_data()
-
-                    except:
-                        self.log.error("Speed error")
-                        self.log.error(traceback.print_exc())
-                else:
-                    cnt += 1
+                        #print (speed,steering)
+                    else:
+                        #self.PrimaryControlMessage.set_gas_brake(-MAX_SPEED)
+                        pass
                 time.sleep(0.01)  # ??
             except:
                 self.log.error(traceback.print_exc())
