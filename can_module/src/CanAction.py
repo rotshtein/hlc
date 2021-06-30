@@ -114,4 +114,3 @@ class CanAction:
             
 if __name__ == '__main__':
     c = CanAction(id=0x51)
-    c.send([0 * 8])
