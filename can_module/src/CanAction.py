@@ -4,7 +4,7 @@ from threading import Thread
 from typing import List
 
 class CanAction:
-    def __init__(self, mask = 0x7FF, id = 0, Channel = 'can0', Bustype='socketcan', Bitrate = '500000') -> None:
+    def __init__(self, mask = 0x7FF, id = 0, Channel = 'can0', Bustype='socketcan', Bitrate = 500000) -> None:
         self.channel = Channel
         self.id = id
         self.mask = mask
@@ -49,7 +49,7 @@ class CanAction:
         
     def send_message(self,msg, timeout = None)->bool:
         try:
-            if isinstance(msg) == can.Message:
+            if isinstance(msg,can.Message):
                 self.send_message_count += 1
                 self.bus.send(msg, timeout)
             else:
@@ -113,4 +113,5 @@ class CanAction:
         return None
             
 if __name__ == '__main__':
-    c = CanAction()
+    c = CanAction(id=0x51)
+    c.send([0 * 8])
