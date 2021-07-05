@@ -124,51 +124,60 @@ class CanbusManager(BaseModule):
 
         read_steering_is_aligned = False
         while not self.stop_thread:
-            speed = speed_pwm.pulse_width
-            steering = steering_pwn.pulse_width
+            
+            
             #print (speed,steering)
             try:
                 if self.Emergency:
                         self.PrimaryControlMessage.set_gas_brake(-MAX_SPEED)
                 else:        
-                    if not self.HurtBeatMessage.IsAlive():
+                    if self.HurtBeatMessage.IsAlive():
                         cnt += 1
 
                         try:
+                            steering = steering_pwn.pulse_width
                             if steering == 0:
                                 steering = MID_PWM_TIME
-                            steering = ((steering - MID_PWM_TIME) / (MID_PWM_TIME - MIN_PWM_TIME))  # -1 <= steering >= 1
-                            if prev_steering != steering:
+                            ksteering = ((steering - MID_PWM_TIME) / (MID_PWM_TIME - MIN_PWM_TIME))  # -1 <= steering >= 1
+                            
                                 
-                                if steering > 1:
-                                    steering = 1
-                                if steering < -1:
-                                    steering = -1
-                                    
-                                prev_steering = steering
-                                set_steering = int(round(steering * MAX_STEERING))
+                            if ksteering > 1:
+                                ksteering = 1
+                            if ksteering < -1:
+                                ksteering = -1
+                                
+                            if prev_steering != ksteering:        
+                                prev_steering = ksteering
+                                set_steering = int(round(ksteering * MAX_STEERING)) 
+                                if (set_steering < -9999):
+                                    set_steering = -9999
                                 self.PrimaryControlMessage.set_steering(set_steering)
-                                self.PrimaryControlMessage.update_data()
+                                
+                                #self.PrimaryControlMessage.update_data()
                         except:
                                 self.log.error("Steering error")
                                 self.log.error(traceback.print_exc())
-
+                        time.sleep(0.05) 
                         try:
+                            speed = speed_pwm.pulse_width
                             if speed == 0:
                                 speed = MID_PWM_TIME
-                            speed = ((speed - MID_PWM_TIME) / (MID_PWM_TIME - MIN_PWM_TIME))  # -1 <= speed >= 1
-                            if prev_speed != speed:
-                                if steering > 1:
-                                    steering = 1
-                                if steering < -1:
-                                    steering = -1
-                                prev_speed = speed
+                            kspeed = ((speed - MID_PWM_TIME) / (MID_PWM_TIME - MIN_PWM_TIME))  # -1 <= speed >= 1
+                        
+                            if kspeed > 1:
+                                kspeed = 1
+                            if kspeed < -1:
+                                kspeed = -1
+                            
+                            if prev_speed != kspeed:
+                                prev_speed = kspeed
                                 
-                                set_speed = int(round(speed * MAX_SPEED))
-                                if set_speed < 10:
-                                    set_speed = DEFAULT_BRAKE
+                                set_speed = int(round(kspeed * MAX_SPEED))
+                                #if set_speed < 10:
+                                #    set_speed = DEFAULT_BRAKE
                                 self.PrimaryControlMessage.set_gas_brake(set_speed)
-                                self.PrimaryControlMessage.update_data()
+                                #self.PrimaryControlMessage.update_data()
+                                print (speed, set_speed)
 
                         except:
                             self.log.error("Speed error")
@@ -178,7 +187,8 @@ class CanbusManager(BaseModule):
                     else:
                         #self.PrimaryControlMessage.set_gas_brake(-MAX_SPEED)
                         pass
-                time.sleep(0.01)  # ??
+                self.PrimaryControlMessage.update_data()
+                 # ??
             except:
                 self.log.error(traceback.print_exc())
         self.PrimaryControlMessage.stop()

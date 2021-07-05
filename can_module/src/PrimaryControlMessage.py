@@ -23,34 +23,28 @@ class PrimaryControlMessage(PeriodicMessage):
                 
     def set_shutdown(self, value:int) -> None:
         self.shutdown = value
-        self.update_data()
         
     def set_estop(self) -> None:
         self.estop = PrimaryControlMessageCommands.ESTOP
-        self.update_data()
         
     def clear_estop(self) -> None:
         self.estop = PrimaryControlMessageCommands.CLEAR
-        self.update_data()
         
     def set_steering(self, value:int) -> None:
         self.steering = value
-        self.update_data()
         
     def set_gas_brake(self, value:int) -> None:
         self.gas_break = value
-        self.update_data()
         
     def set_reset(self) -> None:
         self.reset = PrimaryControlMessageCommands.RESET
-        self.update_data()
         
     def clear_reset(self) -> None:
         self.reset = PrimaryControlMessageCommands.CLEAR
-        self.update_data()
+
         
     def build_buffer(self) -> bytes:
-        self.data = pack("<BBhhBB",self.shutdown, self.estop, self.steering, self.gas_break, self.spare, self.reset)            
+        self.data = pack(">BBhhBB",self.shutdown, self.estop, self.steering, self.gas_break, self.spare, self.reset)            
         return self.data
     
     def update_data(self) -> bool:
