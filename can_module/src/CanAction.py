@@ -38,7 +38,8 @@ class CanAction:
         self.on_message(msg)
     
     def on_message(self, msg):
-        raise Exception(NotImplemented)
+        pass
+    #raise Exception(NotImplemented)
     
     def send(self,id: int, data, timeout=None) -> bool:
         try:
@@ -47,7 +48,7 @@ class CanAction:
         except:
             return False
         
-    def send_message(self,msg, timeout = None)->bool:
+    def send_message(self,msg: can.Message, timeout = None)->bool:
         try:
             if isinstance(msg,can.Message):
                 self.send_message_count += 1
