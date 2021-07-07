@@ -28,7 +28,7 @@ MIN_PWM_TIME = 1100.0
 MID_PWM_TIME = 1500.0
 MAX_SPEED = 10000
 MAX_STEERING = 10000
-DEFAULT_BRAKE = -5000
+DEFAULT_BRAKE = -9500
 CAN_INTERFACE = 'can0'
 TIME_BEFORE_BREAK_MS = 100
 
@@ -189,17 +189,19 @@ class CanbusManager(BaseModule):
                             use_break = True
                             if kspeed == 0:
                                 # if more than 15 seconds move to neutral
-                                if (datetime.now() - self.last_move).total_seconds() > 15:
+                                if (datetime.now() - self.last_move).total_seconds() > 30:
                                     self.DirectionMessage.send_message(Message70HLCSecondary(keyswitch_on=False, parking_brake=2, gears_direction=DIRECTION_NEUTRAL).to_msg())
                                     use_break = False
                                 pass
                             elif kspeed > 0:
                                 self.DirectionMessage.send_message(Message70HLCSecondary(keyswitch_on=False, parking_brake=1, gears_direction=DIRECTION_DRIVE).to_msg())
                                 self.last_move = datetime.now()
+                                use_break = True
 
                             elif kspeed < 0:
                                 self.DirectionMessage.send_message(Message70HLCSecondary(keyswitch_on=False, parking_brake=1, gears_direction=DIRECTION_REVERSE).to_msg())
                                 self.last_move = datetime.now()
+                                use_break = True
                             
                             if True: #prev_speed != kspeed:
                                 prev_speed = kspeed
@@ -226,7 +228,7 @@ class CanbusManager(BaseModule):
                         #time.sleep(0.05) 
                         pass
                 self.PrimaryControlMessage.update_data()
-                 # ??
+                print(speed,steering)
             except:
                 self.log.error(traceback.print_exc())
         self.PrimaryControlMessage.stop()
