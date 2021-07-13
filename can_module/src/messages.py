@@ -44,3 +44,14 @@ class Message70HLCSecondary(MessageWrapper):
     keyswitch_on:bool = False
     gears_direction:int = 0
     parking_brake:int = 0
+    
+@dataclass
+class Message50HLCPrimary(MessageWrapper):
+    id: ClassVar[int] = 0x50
+    format:ClassVar[CompiledFormat] = compile('u8 u8 s16 s16 p8 u8')
+
+    shutdown: int = 0
+    estop: int = 0
+    steering_position: int = 0
+    gas_brake_position: int = 0
+    llc_reset: int = 0
