@@ -75,13 +75,13 @@ class BaseModule:
     @staticmethod
     def init_logger(name: str):
         log = logging.getLogger('')
-        log.setLevel(logging.DEBUG)
-        fh = logging.FileHandler(name + '.log')
-        fh.setLevel(logging.DEBUG)
+        log.setLevel(logging.INFO)
+        fh = logging.FileHandler('/home/pi/' + name + '.log')
+        fh.setLevel(logging.INFO)
 
         # create console handler with a higher log level
         ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)
+        ch.setLevel(logging.INFO)
         formatter = logging.Formatter('%(levelname)s - %(message)s')
         ch.setFormatter(formatter)
         ch.name = 'console'
