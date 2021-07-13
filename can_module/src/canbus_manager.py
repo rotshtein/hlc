@@ -194,8 +194,8 @@ class CanbusManager(BaseModule):
                                 if kspeed == 0:
                                     # if more than 15 seconds move to neutral
                                     if (datetime.now() - self.last_move).total_seconds() > 30:
-                                        if  not direction == DIRECTION_DRIVE:
-                                            direction = DIRECTION_DRIVE
+                                        if  not direction == DIRECTION_NEUTRAL:
+                                            direction = DIRECTION_NEUTRAL
                                             self.DirectionMessage.send_message(Message70HLCSecondary(keyswitch_on=False, parking_brake=2, gears_direction=DIRECTION_NEUTRAL).to_msg())
                                         use_break = False
                                     pass
