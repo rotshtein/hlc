@@ -137,6 +137,7 @@ class CanbusManager(BaseModule):
         # self.DirectionMessage.send_message(Message70HLCSecondary(keyswitch_on=False, parking_brake=0, gears_direction=DIRECTION_DRIVE).to_msg())
         self.DirectionMessage.send_message(Message70HLCSecondary(keyswitch_on=False, parking_brake=2, gears_direction=DIRECTION_DRIVE).to_msg())
         read_steering_is_aligned = False
+        direction = DIRECTION_DRIVE
         while not self.stop_thread:
             
             
@@ -150,18 +151,19 @@ class CanbusManager(BaseModule):
 
                         try:
                             steering = steering_pwn.pulse_width
-                            if steering == 0:
-                                steering = MID_PWM_TIME
-                            ksteering = ((steering - MID_PWM_TIME) / (MID_PWM_TIME - MIN_PWM_TIME))  # -1 <= steering >= 1
-                            
+                            if not prev_steering == steering:
+                                prev_steering = steering
+                                if steering == 0:
+                                    steering = MID_PWM_TIME
+                                ksteering = ((steering - MID_PWM_TIME) / (MID_PWM_TIME - MIN_PWM_TIME))  # -1 <= steering >= 1
+                                    
+                                if ksteering > 1:
+                                    ksteering = 1
+                                if ksteering < -1:
+                                    ksteering = -1
                                 
-                            if ksteering > 1:
-                                ksteering = 1
-                            if ksteering < -1:
-                                ksteering = -1
+                       
                                 
-                            if prev_steering != ksteering:        
-                                prev_steering = ksteering
                                 set_steering = int(round(ksteering * MAX_STEERING)) 
                                 if (set_steering < -9999):
                                     set_steering = -9999
@@ -171,61 +173,68 @@ class CanbusManager(BaseModule):
                         except:
                                 self.log.error("Steering error")
                                 self.log.error(traceback.print_exc())
-                        time.sleep(0.05) 
+                        #time.sleep(0.05) 
                         try:
                             speed = speed_pwm.pulse_width
-                            if speed == 0:
-                                speed = MID_PWM_TIME
-                            elif (speed > (MID_PWM_TIME - SPEED_DEADZONE)) and (speed < (MID_PWM_TIME + SPEED_DEADZONE)):
-                                speed = MID_PWM_TIME
-                                
-                            kspeed = ((speed - MID_PWM_TIME) / (MID_PWM_TIME - MIN_PWM_TIME))  # -1 <= speed >= 1
-                           
-                            if kspeed > 1:
-                                kspeed = 1
-                            if kspeed < -1:
-                                kspeed = -1
-
-                            use_break = True
-                            if kspeed == 0:
-                                # if more than 15 seconds move to neutral
-                                if (datetime.now() - self.last_move).total_seconds() > 30:
-                                    self.DirectionMessage.send_message(Message70HLCSecondary(keyswitch_on=False, parking_brake=2, gears_direction=DIRECTION_NEUTRAL).to_msg())
-                                    use_break = False
-                                pass
-                            elif kspeed > 0:
-                                self.DirectionMessage.send_message(Message70HLCSecondary(keyswitch_on=False, parking_brake=1, gears_direction=DIRECTION_DRIVE).to_msg())
-                                self.last_move = datetime.now()
-                                use_break = True
-
-                            elif kspeed < 0:
-                                self.DirectionMessage.send_message(Message70HLCSecondary(keyswitch_on=False, parking_brake=1, gears_direction=DIRECTION_REVERSE).to_msg())
-                                self.last_move = datetime.now()
-                                use_break = True
-                            
-                            if True: #prev_speed != kspeed:
-                                prev_speed = kspeed
-                                
-                                set_speed = int(round(abs(kspeed) * MAX_SPEED))
-                                if kspeed == 0:
-                                    if use_break:
-                                        set_speed = DEFAULT_BRAKE
+                            if not prev_speed == speed:
+                                prev_speed = speed
+                                if speed == 0:
+                                    speed = MID_PWM_TIME
+                                elif (speed > (MID_PWM_TIME - SPEED_DEADZONE)) and (speed < (MID_PWM_TIME + SPEED_DEADZONE)):
+                                    speed = MID_PWM_TIME
                                     
-                                #if set_speed < 10:
-                                #    set_speed = DEFAULT_BRAKE
-                                self.PrimaryControlMessage.set_gas_brake(set_speed)
-                                #self.PrimaryControlMessage.update_data()
-                                #print (speed, set_speed)
+                                kspeed = ((speed - MID_PWM_TIME) / (MID_PWM_TIME - MIN_PWM_TIME))  # -1 <= speed >= 1
+                            
+                                if kspeed > 1:
+                                    kspeed = 1
+                                if kspeed < -1:
+                                    kspeed = -1
+
+                                use_break = True
+                                if kspeed == 0:
+                                    # if more than 15 seconds move to neutral
+                                    if (datetime.now() - self.last_move).total_seconds() > 30:
+                                        if  not direction == DIRECTION_DRIVE:
+                                            direction = DIRECTION_DRIVE
+                                            self.DirectionMessage.send_message(Message70HLCSecondary(keyswitch_on=False, parking_brake=2, gears_direction=DIRECTION_NEUTRAL).to_msg())
+                                        use_break = False
+                                    pass
+                                elif kspeed > 0:
+                                    if  not direction == DIRECTION_DRIVE:
+                                        direction = DIRECTION_DRIVE
+                                        self.DirectionMessage.send_message(Message70HLCSecondary(keyswitch_on=False, parking_brake=1, gears_direction=DIRECTION_DRIVE).to_msg())
+                                    self.last_move = datetime.now()
+                                    use_break = True
+
+                                elif kspeed < 0:
+                                    if  not direction == DIRECTION_REVERSE:
+                                        direction = DIRECTION_REVERSE
+                                        self.DirectionMessage.send_message(Message70HLCSecondary(keyswitch_on=False, parking_brake=1, gears_direction=DIRECTION_REVERSE).to_msg())
+                                    self.last_move = datetime.now()
+                                    use_break = True
+                                
+                                if True: #prev_speed != kspeed:
+                                   
+                                    set_speed = int(round(abs(kspeed) * MAX_SPEED))
+                                    if kspeed == 0:
+                                        if use_break:
+                                            set_speed = DEFAULT_BRAKE
+                                        
+                                    #if set_speed < 10:
+                                    #    set_speed = DEFAULT_BRAKE
+                                    self.PrimaryControlMessage.set_gas_brake(set_speed)
+                                    #self.PrimaryControlMessage.update_data()
+                                    #print (speed, set_speed)
 
                         except:
                             self.log.error("Speed error")
                             self.log.error(traceback.print_exc())
-                            time.sleep(0.05) 
+                            #time.sleep(0.05) 
                             
                         #print (speed,steering)
                     else:
                         #self.PrimaryControlMessage.set_gas_brake(-MAX_SPEED)
-                        #time.sleep(0.05) 
+
                         pass
                 self.PrimaryControlMessage.update_data()
                 print(speed,steering)
