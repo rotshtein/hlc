@@ -237,7 +237,7 @@ class CanbusManager(BaseModule):
 
                         pass
                 self.PrimaryControlMessage.update_data()
-                print(speed,steering)
+                #print(speed,steering)
             except:
                 self.log.error(traceback.print_exc())
         self.PrimaryControlMessage.stop()
@@ -266,20 +266,23 @@ def signal_handler(sig, frame):
 
 def main():
     global stop_run
+    canbus = CanbusManager()
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-    canbus = CanbusManager()
+    
     canbus.start()
 
     while not stop_run:
         try:
+            time.sleep(1)
+            '''
             key = getkey()
             if key == '?':
                 print(canbus.get_last_heartbeat().to_json())
             elif key == 'q':
                 canbus.emergecy_stop()
                 stop_run = True
-                
+            '''    
         except Exception as e:
             canbus.log.error(e)
 
