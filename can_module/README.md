@@ -32,4 +32,29 @@ A Linux micro process part of the Afron application
 6. Install the canbus package - from the canbus directory
     > sudo pip install -e .
 
-    
+
+Fast boot:
+1. Disable components at boot:
+
+  # setting for faster boot
+  disable_splash=1
+  dtoverlay=disable-bt
+  dtoverlay=disable-wifi
+  boot_delay=0
+
+
+  [all]
+  # canbus hat
+  dtoverlay=2xMCP2517FD,oscillator=8000000
+  dtoverlay=2xMCP2518FD-spi0,oscillator=8000000
+  hdmi_enable_4kp60=1
+
+
+2. Disable systemd services
+  wpa_supplicant.service
+  ifupdown-pre.service
+  hciuart 
+  raspi-config
+  avahi-daemon
+  
+3. Add the hlc.service to /etc/systemd/system directory and enable the service
