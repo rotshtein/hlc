@@ -1,0 +1,17 @@
+[Unit]
+Description=HLC Service
+After=multi-user.target
+#Conflicts=getty@tty1.service
+#StartLimmitIntervalSec=500s
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/hlc
+ExecStart=/usr/bin/python3 /home/pi/hlc/can_module/src/canbus_manager.py
+#StandardInput=tty-force
+Restart=on-failure
+#RestartSec=2s
+
+
+[Install]
+WantedBy=multi-user.target
