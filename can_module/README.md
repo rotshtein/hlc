@@ -56,5 +56,14 @@ Fast boot:
   hciuart 
   raspi-config
   avahi-daemon
+  wpa_supplicant
   
 3. Add the hlc.service to /etc/systemd/system directory and enable the service
+
+
+** For development enable the wifi:
+   1. at /boot/config.txt remark   dtoverlay=disable-wifi
+   2. sudo systemctl enable wpa_supplicant
+
+   *** remember to disable the wifi and the wpa_supplicant service to get short boot time
+   
