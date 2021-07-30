@@ -61,9 +61,7 @@ Fast boot:
 3. Add the hlc.service to /etc/systemd/system directory and enable the service
 
 
-** For development enable the wifi:
-   1. at /boot/config.txt remark   dtoverlay=disable-wifi
-   2. sudo systemctl enable wpa_supplicant
+** For development enable the wifi: At /boot/config.txt remark   dtoverlay=disable-wifi
 
-   *** remember to disable the wifi and the wpa_supplicant service to get short boot time
+   *** remember to disable the eifi (dtoverlay=disable-wifi) get short boot time
    
